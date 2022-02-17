@@ -1,0 +1,2 @@
+# obsidian_bar
+ 
