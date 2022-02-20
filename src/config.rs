@@ -23,12 +23,16 @@ pub fn make_bar() -> Bar {
         color_spec,
         sep_color_spec,
         show_both_seps_on_overlap: false,
-        outer_sep_config: (true, false),
+        outer_sep_config: (true, true),
     });
 
     bar.add_module(
         JustifyModule::Left,
-        Module::new(6, || String::from("Helloo"), None, None, None),
+        Module::new(5, || String::from("Helloo"), None, None, None),
+    );
+    bar.add_module(
+        JustifyModule::Left,
+        Module::new(5, || String::from("Helloo"), None, None, None),
     );
 
     bar.add_module(
@@ -38,7 +42,15 @@ pub fn make_bar() -> Bar {
 
     bar.add_module(
         JustifyModule::Right,
-        Module::new(20, || String::from("FooBar"), None, None, None),
+        Module::new(6, || String::from("FooBar"), None, None, None),
+    );
+    bar.add_module(
+        JustifyModule::Right,
+        Module::new(6, || String::from("FooBar"), None, None, None),
+    );
+    bar.add_module(
+        JustifyModule::Right,
+        Module::new(6, || String::from("FooBar"), None, None, None),
     );
 
     bar

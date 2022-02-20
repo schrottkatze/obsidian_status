@@ -49,91 +49,94 @@ impl Bar {
         let mut bufstr = BufferedStandardStream::stdout(ColorChoice::Always);
         let mut currentLength = 0;
 
-        //bufstr
-        //.set_color(ColorSpec::new().set_fg(Some(Color::Rgb(127, 0, 255))))
-        //.unwrap();
-        //write!(&mut bufstr, "test").unwrap();
-        //bufstr
-        //.set_color(ColorSpec::new().set_fg(Some(Color::Rgb(0, 127, 255))))
-        //.unwrap();
-        //write!(&mut bufstr, "test").unwrap();
-        self.modules_l[0].render_mod(
-            &mut bufstr,
-            &self.config,
-            &RendererPosInfo {
-                in_block: JustifyModule::Left,
-                first_of_block: true,
-                last_of_block: false,
-            },
-            &mut currentLength,
-        );
-        self.modules_l[0].render_mod(
-            &mut bufstr,
-            &self.config,
-            &RendererPosInfo {
-                in_block: JustifyModule::Left,
-                first_of_block: false,
-                last_of_block: false,
-            },
-            &mut currentLength,
-        );
-        self.modules_l[0].render_mod(
-            &mut bufstr,
-            &self.config,
-            &RendererPosInfo {
-                in_block: JustifyModule::Left,
-                first_of_block: false,
-                last_of_block: true,
-            },
-            &mut currentLength,
-        );
+        let spacer_sizes = self.sim_render(width);
 
-        write!(&mut bufstr, "     ");
-        self.modules_c[0].render_mod(
-            &mut bufstr,
-            &self.config,
-            &RendererPosInfo {
-                in_block: JustifyModule::Center,
-                first_of_block: true,
-                last_of_block: true,
-            },
-            &mut currentLength,
-        );
+        for (i, module) in self.modules_l.iter().enumerate() { 
+            module.render_mod(
+                &mut bufstr,
+                &self.config,
+                &RendererPosInfo {
+                    in_block: JustifyModule::Left,
+                    first_of_block: i == 0,
+                    last_of_block: i == self.modules_l.len() -1,
+                },
+                &mut currentLength,
+            );
+        }
 
-        write!(&mut bufstr, "     ");
-        self.modules_r[0].render_mod(
-            &mut bufstr,
-            &self.config,
-            &RendererPosInfo {
-                in_block: JustifyModule::Right,
-                first_of_block: true,
-                last_of_block: false,
-            },
-            &mut currentLength,
-        );
-        self.modules_r[0].render_mod(
-            &mut bufstr,
-            &self.config,
-            &RendererPosInfo {
-                in_block: JustifyModule::Right,
-                first_of_block: false,
-                last_of_block: false,
-            },
-            &mut currentLength,
-        );
-        self.modules_r[0].render_mod(
-            &mut bufstr,
-            &self.config,
-            &RendererPosInfo {
-                in_block: JustifyModule::Right,
-                first_of_block: false,
-                last_of_block: true,
-            },
-            &mut currentLength,
-        );
+        write!(&mut bufstr, "{}", " ".repeat(spacer_sizes.0 as usize));
+
+        for (i, module) in self.modules_c.iter().enumerate() { 
+            module.render_mod(
+                &mut bufstr,
+                &self.config,
+                &RendererPosInfo {
+                    in_block: JustifyModule::Center,
+                    first_of_block: i == 0,
+                    last_of_block: i == self.modules_c.len() -1,
+                },
+                &mut currentLength,
+            );
+        }
+
+        write!(&mut bufstr, "{}", " ".repeat(spacer_sizes.1 as usize));
+
+        for (i, module) in self.modules_r.iter().enumerate() { 
+            module.render_mod(
+                &mut bufstr,
+                &self.config,
+                &RendererPosInfo {
+                    in_block: JustifyModule::Right,
+                    first_of_block: i == 0,
+                    last_of_block: i == self.modules_r.len() -1,
+                },
+                &mut currentLength,
+            );
+        }
+
 
         write!(&mut bufstr, "\n");
-        bufstr.flush();
+        bufstr.flush().unwrap();
+    }
+
+    fn sim_render(&self, line_length: u16) -> (u16, u16) {
+        let mut modules_l_size: u16 = 0; 
+        for (i, module) in self.modules_l.iter().enumerate() {
+            modules_l_size += module.calcLenStatic(&self.config, &RendererPosInfo {
+                in_block: JustifyModule::Left,
+                first_of_block: i == 0,
+                last_of_block: i == self.modules_l.len() - 1,
+            });
+        }
+
+        let mut modules_c_size: u16 = 0; 
+        for (i, module) in self.modules_c.iter().enumerate() {
+            modules_c_size += module.calcLenStatic(&self.config, &RendererPosInfo {
+                in_block: JustifyModule::Center,
+                first_of_block: i == 0,
+                last_of_block: i == self.modules_c.len() - 1,
+            });
+        }
+
+        let mut modules_r_size: u16 = 0; 
+        for (i, module) in self.modules_r.iter().enumerate() {
+            modules_r_size += module.calcLenStatic(&self.config, &RendererPosInfo {
+                in_block: JustifyModule::Right,
+                first_of_block: i == 0,
+                last_of_block: i == self.modules_r.len() - 1,
+            });
+        }
+
+        let all_mod_size = modules_l_size + modules_c_size + modules_r_size;
+
+        if all_mod_size < line_length {
+            (
+                (line_length as f32 / 2.0).round() as u16 - (modules_l_size + (modules_c_size as f32 / 2.0).round() as u16),
+                (line_length as f32 / 2.0).round() as u16 - (modules_r_size + (modules_c_size as f32 / 2.0).round() as u16)
+            )
+        } else {
+            (0,0)
+        }
     }
 
     pub fn add_module(&mut self, alignment: JustifyModule, module: Module) {
