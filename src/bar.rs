@@ -51,14 +51,14 @@ impl Bar {
 
         let spacer_sizes = self.sim_render(width);
 
-        for (i, module) in self.modules_l.iter().enumerate() { 
+        for (i, module) in self.modules_l.iter().enumerate() {
             module.render_mod(
                 &mut bufstr,
                 &self.config,
                 &RendererPosInfo {
                     in_block: JustifyModule::Left,
                     first_of_block: i == 0,
-                    last_of_block: i == self.modules_l.len() -1,
+                    last_of_block: i == self.modules_l.len() - 1,
                 },
                 &mut currentLength,
             );
@@ -66,14 +66,14 @@ impl Bar {
 
         write!(&mut bufstr, "{}", " ".repeat(spacer_sizes.0 as usize));
 
-        for (i, module) in self.modules_c.iter().enumerate() { 
+        for (i, module) in self.modules_c.iter().enumerate() {
             module.render_mod(
                 &mut bufstr,
                 &self.config,
                 &RendererPosInfo {
                     in_block: JustifyModule::Center,
                     first_of_block: i == 0,
-                    last_of_block: i == self.modules_c.len() -1,
+                    last_of_block: i == self.modules_c.len() - 1,
                 },
                 &mut currentLength,
             );
@@ -81,61 +81,71 @@ impl Bar {
 
         write!(&mut bufstr, "{}", " ".repeat(spacer_sizes.1 as usize));
 
-        for (i, module) in self.modules_r.iter().enumerate() { 
+        for (i, module) in self.modules_r.iter().enumerate() {
             module.render_mod(
                 &mut bufstr,
                 &self.config,
                 &RendererPosInfo {
                     in_block: JustifyModule::Right,
                     first_of_block: i == 0,
-                    last_of_block: i == self.modules_r.len() -1,
+                    last_of_block: i == self.modules_r.len() - 1,
                 },
                 &mut currentLength,
             );
         }
 
-
-        write!(&mut bufstr, "\n");
+        write!(&mut bufstr, "\r");
         bufstr.flush().unwrap();
     }
 
     fn sim_render(&self, line_length: u16) -> (u16, u16) {
-        let mut modules_l_size: u16 = 0; 
+        let mut modules_l_size: u16 = 0;
         for (i, module) in self.modules_l.iter().enumerate() {
-            modules_l_size += module.calcLenStatic(&self.config, &RendererPosInfo {
-                in_block: JustifyModule::Left,
-                first_of_block: i == 0,
-                last_of_block: i == self.modules_l.len() - 1,
-            });
+            modules_l_size += module.calcLenStatic(
+                &self.config,
+                &RendererPosInfo {
+                    in_block: JustifyModule::Left,
+                    first_of_block: i == 0,
+                    last_of_block: i == self.modules_l.len() - 1,
+                },
+            );
         }
 
-        let mut modules_c_size: u16 = 0; 
+        let mut modules_c_size: u16 = 0;
         for (i, module) in self.modules_c.iter().enumerate() {
-            modules_c_size += module.calcLenStatic(&self.config, &RendererPosInfo {
-                in_block: JustifyModule::Center,
-                first_of_block: i == 0,
-                last_of_block: i == self.modules_c.len() - 1,
-            });
+            modules_c_size += module.calcLenStatic(
+                &self.config,
+                &RendererPosInfo {
+                    in_block: JustifyModule::Center,
+                    first_of_block: i == 0,
+                    last_of_block: i == self.modules_c.len() - 1,
+                },
+            );
         }
 
-        let mut modules_r_size: u16 = 0; 
+        let mut modules_r_size: u16 = 0;
         for (i, module) in self.modules_r.iter().enumerate() {
-            modules_r_size += module.calcLenStatic(&self.config, &RendererPosInfo {
-                in_block: JustifyModule::Right,
-                first_of_block: i == 0,
-                last_of_block: i == self.modules_r.len() - 1,
-            });
+            modules_r_size += module.calcLenStatic(
+                &self.config,
+                &RendererPosInfo {
+                    in_block: JustifyModule::Right,
+                    first_of_block: i == 0,
+                    last_of_block: i == self.modules_r.len() - 1,
+                },
+            );
         }
 
         let all_mod_size = modules_l_size + modules_c_size + modules_r_size;
 
         if all_mod_size < line_length {
             (
-                (line_length as f32 / 2.0).round() as u16 - (modules_l_size + (modules_c_size as f32 / 2.0).round() as u16),
-                (line_length as f32 / 2.0).round() as u16 - (modules_r_size + (modules_c_size as f32 / 2.0).round() as u16)
+                (line_length as f32 / 2.0).round() as u16
+                    - (modules_l_size + (modules_c_size as f32 / 2.0).round() as u16),
+                (line_length as f32 / 2.0).round() as u16
+                    - (modules_r_size + (modules_c_size as f32 / 2.0).round() as u16),
             )
         } else {
-            (0,0)
+            (0, 0)
         }
     }
 

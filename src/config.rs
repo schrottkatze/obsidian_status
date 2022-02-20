@@ -1,9 +1,14 @@
+use std::process::Command;
+use std::time::SystemTime;
+
+use time::{format_description, formatting, OffsetDateTime};
+
 use termcolor::{Color, ColorSpec};
 
 use super::bar::{Bar, BarConfig, SepSet};
 use super::module::{JustifyModule, Module};
 
-pub const UPDATE_MS: u64 = 100;
+pub const UPDATE_MS: u64 = 1000;
 
 pub fn make_bar() -> Bar {
     //let color_spec = make_color_spec(127,0,255);
@@ -15,10 +20,10 @@ pub fn make_bar() -> Bar {
     sep_color_spec.set_fg(Some(Color::Rgb(0, 127, 255)));
 
     let mut bar = Bar::new(BarConfig {
-        sep_set: SepSet::DualDifferentAll(
-            ("<".to_string(), ">".to_string()),
-            ("{".to_string(), "}".to_string()),
-            ("[".to_string(), "]".to_string()),
+        sep_set: SepSet::SingleSidesDualCenter(
+            ">".to_string(),
+            ("(".to_string(), ")".to_string()),
+            "<".to_string(),
         ),
         color_spec,
         sep_color_spec,
@@ -26,32 +31,48 @@ pub fn make_bar() -> Bar {
         outer_sep_config: (true, true),
     });
 
-    bar.add_module(
-        JustifyModule::Left,
-        Module::new(5, || String::from("Helloo"), None, None, None),
-    );
-    bar.add_module(
-        JustifyModule::Left,
-        Module::new(5, || String::from("Helloo"), None, None, None),
-    );
-
+    // clock example
     bar.add_module(
         JustifyModule::Center,
-        Module::new(12, || String::from("Hello World"), None, None, None),
+        Module::new(20, clock_mod, None, None, None),
     );
 
+    // ping example
     bar.add_module(
-        JustifyModule::Right,
-        Module::new(6, || String::from("FooBar"), None, None, None),
-    );
-    bar.add_module(
-        JustifyModule::Right,
-        Module::new(6, || String::from("FooBar"), None, None, None),
-    );
-    bar.add_module(
-        JustifyModule::Right,
-        Module::new(6, || String::from("FooBar"), None, None, None),
+        JustifyModule::Left,
+        Module::new(27, ping_cf_mod, None, None, None),
     );
 
     bar
+}
+
+fn clock_mod() -> String {
+    let tfmt = format_description::parse("[year]-[month]-[day], [hour]:[minute]:[second]").unwrap();
+    let systime: OffsetDateTime = SystemTime::now().into();
+
+    systime.format(&tfmt).unwrap()
+}
+
+fn ping_cf_mod() -> String {
+    let ip = "1.1.1.1";
+
+    let ping_output = Command::new("/usr/bin/ping")
+        .args(["-c", "1", ip])
+        .output()
+        .expect("ping failed!")
+        .stdout;
+
+    let r = std::str::from_utf8(&ping_output)
+        .unwrap()
+        .to_string()
+        .lines()
+        .collect::<Vec<&str>>()
+        .get(1)
+        .unwrap()
+        .to_string();
+
+    let ms_pos = r.find("time=").unwrap() + 5;
+    let time = &r[ms_pos..r.len()];
+
+    format!("Ping to {}:{}{}", ip, " ".repeat(4-(time.len() - 7)),time)
 }

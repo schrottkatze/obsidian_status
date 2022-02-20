@@ -1,5 +1,7 @@
 use std::thread;
-use std::time;
+use std::time::Duration;
+
+extern crate time;
 
 extern crate terminal_size;
 use terminal_size::{terminal_size, Height, Width};
@@ -17,6 +19,6 @@ fn main() {
             statusbar.render(w);
         }
 
-        thread::sleep(time::Duration::from_millis(config::UPDATE_MS));
+        thread::sleep(Duration::from_millis(config::UPDATE_MS));
     }
 }
