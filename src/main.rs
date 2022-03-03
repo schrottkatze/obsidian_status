@@ -7,11 +7,14 @@ extern crate terminal_size;
 use terminal_size::{terminal_size, Height, Width};
 
 mod bar;
+mod colored;
 mod config;
 mod module;
+use colored::{Color, Colored};
 
 fn main() {
     let statusbar = config::make_bar();
+
     loop {
         let size = terminal_size();
 

@@ -1,6 +1,6 @@
 use super::bar::{BarConfig, SepDuo, SepSet};
 use std::io::Write;
-use termcolor::{BufferedStandardStream, Color, ColorChoice, ColorSpec, WriteColor};
+use termcolor::{BufferedStandardStream, ColorSpec, WriteColor};
 
 pub struct Module {
     module_length: usize,
@@ -10,7 +10,7 @@ pub struct Module {
     sep_color: Option<ColorSpec>,
 }
 
-#[derive(PartialEq)]
+#[derive(PartialEq, Clone, Copy)]
 pub enum JustifyModule {
     Left,
     Right,
@@ -132,7 +132,7 @@ impl Module {
         write!(bufstr, "{}", sep);
     }
 
-    pub fn calcLenStatic(&self, bar_cfg: &BarConfig, pos_info: &RendererPosInfo) -> u16 {
+    pub fn calc_len_static(&self, bar_cfg: &BarConfig, pos_info: &RendererPosInfo) -> u16 {
         if (match self.render_condition {
             Some(f) => f,
             None => || true,
@@ -159,7 +159,7 @@ impl Module {
     ) -> &'a str {
         match &bar_cfg.sep_set {
             SepSet::SingleAlways(v) => v,
-            SepSet::DualAlways(v) => getCorrectSepFromDuo(&v, first_in_mod),
+            SepSet::DualAlways(v) => get_correct_sep_from_duo(&v, first_in_mod),
             SepSet::AlignmentBound(l, c, r) => match pos_info.in_block {
                 JustifyModule::Left => l,
                 JustifyModule::Right => c,
@@ -168,18 +168,18 @@ impl Module {
             SepSet::SingleSidesDualCenter(l, c, r) => match pos_info.in_block {
                 JustifyModule::Left => l,
                 JustifyModule::Right => r,
-                JustifyModule::Center => getCorrectSepFromDuo(c, first_in_mod),
+                JustifyModule::Center => get_correct_sep_from_duo(c, first_in_mod),
             },
             SepSet::DualDifferentAll(l, c, r) => match pos_info.in_block {
-                JustifyModule::Left => getCorrectSepFromDuo(l, first_in_mod),
-                JustifyModule::Right => getCorrectSepFromDuo(r, first_in_mod),
-                JustifyModule::Center => getCorrectSepFromDuo(c, first_in_mod),
+                JustifyModule::Left => get_correct_sep_from_duo(l, first_in_mod),
+                JustifyModule::Right => get_correct_sep_from_duo(r, first_in_mod),
+                JustifyModule::Center => get_correct_sep_from_duo(c, first_in_mod),
             },
         }
     }
 }
 
-fn getCorrectSepFromDuo<'a>(duo: &'a SepDuo, first_in_mod: bool) -> &'a String {
+fn get_correct_sep_from_duo<'a>(duo: &'a SepDuo, first_in_mod: bool) -> &'a String {
     if first_in_mod {
         &duo.0
     } else {

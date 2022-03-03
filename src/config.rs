@@ -1,7 +1,7 @@
 use std::process::Command;
 use std::time::SystemTime;
 
-use time::{format_description, formatting, OffsetDateTime};
+use time::{format_description, OffsetDateTime};
 
 use termcolor::{Color, ColorSpec};
 
@@ -11,8 +11,6 @@ use super::module::{JustifyModule, Module};
 pub const UPDATE_MS: u64 = 1000;
 
 pub fn make_bar() -> Bar {
-    //let color_spec = make_color_spec(127,0,255);
-    //let sep_color_spec = make_color_spec(0,127,255);
     let mut color_spec = ColorSpec::new();
     color_spec.set_fg(Some(Color::Rgb(127, 0, 255)));
 
@@ -27,7 +25,7 @@ pub fn make_bar() -> Bar {
         ),
         color_spec,
         sep_color_spec,
-        show_both_seps_on_overlap: false,
+        show_both_seps_on_overlap: true,
         outer_sep_config: (true, true),
     });
 
@@ -41,6 +39,16 @@ pub fn make_bar() -> Bar {
     bar.add_module(
         JustifyModule::Left,
         Module::new(27, ping_cf_mod, None, None, None),
+    );
+
+    // testing
+    bar.add_module(
+        JustifyModule::Right,
+        Module::new(27, ping_cf_mod, None, None, None),
+    );
+    bar.add_module(
+        JustifyModule::Right,
+        Module::new(20, clock_mod, None, None, None),
     );
 
     bar
@@ -74,5 +82,10 @@ fn ping_cf_mod() -> String {
     let ms_pos = r.find("time=").unwrap() + 5;
     let time = &r[ms_pos..r.len()];
 
-    format!("Ping to {}:{}{}", ip, " ".repeat(4-(time.len() - 7)),time)
+    format!(
+        "Ping to {}:{}{}",
+        ip,
+        " ".repeat(4 - (time.len() - 7)),
+        time
+    )
 }
