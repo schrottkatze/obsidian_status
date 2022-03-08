@@ -10,7 +10,6 @@ mod bar;
 mod colored;
 mod config;
 mod module;
-use colored::{Color, Colored};
 
 fn main() {
     let statusbar = config::make_bar();

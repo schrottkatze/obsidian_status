@@ -1,5 +1,3 @@
-use std::fmt;
-
 pub enum Color {
     Black,
     Red,
@@ -21,7 +19,7 @@ pub enum Color {
     Rgb((u8, u8, u8)),
 }
 
-pub struct Colored {
+pub struct TextFormatConf {
     fg: Option<Color>,
     bg: Option<Color>,
     bold: Option<bool>,
@@ -32,13 +30,12 @@ pub struct Colored {
     reverse: Option<bool>,
     hidden: Option<bool>,
     strikethrough: Option<bool>,
-    reset: bool, // reset at the end?
-    content: String,
+    reset_before: bool,
 }
 
-impl Colored {
-    pub fn new(org_str: &str, reset: bool) -> Colored {
-        Colored {
+impl TextFormatConf {
+    pub fn new() -> TextFormatConf {
+        TextFormatConf {
             fg: None,
             bg: None,
             bold: None,
@@ -49,66 +46,37 @@ impl Colored {
             reverse: None,
             hidden: None,
             strikethrough: None,
-            reset,
-            content: String::from(org_str),
+            reset_before: true,
         }
     }
+    pub fn fg_only(fg: Color) -> TextFormatConf {
+        let mut r = TextFormatConf::new();
 
-    pub fn set_fg(&mut self, col: Option<Color>) -> &mut Colored {
-        self.fg = col;
-        self
-    }
-    pub fn set_bg(&mut self, col: Option<Color>) -> &mut Colored {
-        self.bg = col;
-        self
-    }
-    pub fn set_bold(&mut self, bold: Option<bool>) -> &mut Colored {
-        self.bold = bold;
-        self
-    }
-    pub fn set_dim(&mut self, dim: Option<bool>) -> &mut Colored {
-        self.dim = dim;
-        self
-    }
-    pub fn set_italic(&mut self, italic: Option<bool>) -> &mut Colored {
-        self.italic = italic;
-        self
-    }
-    pub fn set_underline(&mut self, underline: Option<bool>) -> &mut Colored {
-        self.underline = underline;
-        self
-    }
-    pub fn set_blink(&mut self, blink: Option<bool>) -> &mut Colored {
-        self.blink = blink;
-        self
-    }
-    pub fn set_reverse(&mut self, reverse: Option<bool>) -> &mut Colored {
-        self.reverse = reverse;
-        self
-    }
-    pub fn set_hidden(&mut self, hidden: Option<bool>) -> &mut Colored {
-        self.hidden = hidden;
-        self
-    }
-    pub fn set_strikethrough(&mut self, strikethrough: Option<bool>) -> &mut Colored {
-        self.strikethrough = strikethrough;
-        self
-    }
-    pub fn get_plain(&self) -> &str {
-        &self.content
-    }
-    pub fn get_colored(&self) -> String {
-        let r = String::new();
+        r.set_fg(Some(fg));
 
-        format!(
-            "{}{}{}",
-            self.get_ansi_color_code(),
-            &self.content,
-            if self.reset { "\x1b[0m" } else { "" }
-        )
+        r
     }
+    pub fn bg_only(bg: Color) -> TextFormatConf {
+        let mut r = TextFormatConf::new();
+
+        r.set_bg(Some(bg));
+
+        r
+    }
+    pub fn fg_and_bg(fg: Color, bg: Color) -> TextFormatConf {
+        let mut r = TextFormatConf::new();
+
+        r.set_fg(Some(fg)).set_bg(Some(bg));
+
+        r
+    }
+
     pub fn get_ansi_color_code(&self) -> String {
         let mut r = String::from("\x1b[");
+
+        if self.reset_before {
+            r.push_str("0m\x1b[");
+        }
 
         if let Some(bold) = self.bold {
             if bold {
@@ -234,10 +202,49 @@ impl Colored {
 
         r
     }
-}
 
-impl fmt::Display for Colored {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}", self.get_colored())
+    pub fn set_fg(&mut self, col: Option<Color>) -> &mut TextFormatConf {
+        self.fg = col;
+        self
+    }
+    pub fn set_bg(&mut self, col: Option<Color>) -> &mut TextFormatConf {
+        self.bg = col;
+        self
+    }
+    pub fn set_bold(&mut self, bold: Option<bool>) -> &mut TextFormatConf {
+        self.bold = bold;
+        self
+    }
+    pub fn set_dim(&mut self, dim: Option<bool>) -> &mut TextFormatConf {
+        self.dim = dim;
+        self
+    }
+    pub fn set_italic(&mut self, italic: Option<bool>) -> &mut TextFormatConf {
+        self.italic = italic;
+        self
+    }
+    pub fn set_underline(&mut self, underline: Option<bool>) -> &mut TextFormatConf {
+        self.underline = underline;
+        self
+    }
+    pub fn set_blink(&mut self, blink: Option<bool>) -> &mut TextFormatConf {
+        self.blink = blink;
+        self
+    }
+    pub fn set_reverse(&mut self, reverse: Option<bool>) -> &mut TextFormatConf {
+        self.reverse = reverse;
+        self
+    }
+    pub fn set_hidden(&mut self, hidden: Option<bool>) -> &mut TextFormatConf {
+        self.hidden = hidden;
+        self
+    }
+    pub fn set_strikethrough(&mut self, strikethrough: Option<bool>) -> &mut TextFormatConf {
+        self.strikethrough = strikethrough;
+        self
+    }
+    pub fn set_reset(&mut self, reset: bool) -> &mut TextFormatConf {
+        self.reset_before = reset;
+        self
     }
 }
