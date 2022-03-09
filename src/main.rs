@@ -7,8 +7,8 @@ extern crate terminal_size;
 use terminal_size::{terminal_size, Height, Width};
 
 mod bar;
-mod colored;
 mod config;
+mod formatting;
 mod module;
 
 fn main() {

@@ -1,30 +1,31 @@
-use super::text_format_conf::{TextFormatConf, Color};
+use super::text_format_conf::TextFormatConf;
 use std::fmt;
 
 pub struct Colored {
-    conf: TextFormatConf,
     content: String,
+    colored: String,
+    conf: TextFormatConf,
 }
 
 impl Colored {
     pub fn new(org_str: &str, initial_conf: TextFormatConf) -> Colored {
         Colored {
-            conf: initial_conf,
+            colored: Colored::make_colored(org_str, &initial_conf),
             content: String::from(org_str),
+            conf: initial_conf,
         }
+    }
+
+    fn make_colored(org_str: &str, tfc: &TextFormatConf) -> String {
+        format!("{}{}", tfc.get_ansi_color_code(), org_str,)
     }
 
     pub fn get_plain(&self) -> &str {
         &self.content
     }
-    pub fn get_colored(&self) -> String {
-        let r = String::new();
 
-        format!(
-            "{}{}",
-            self.conf.get_ansi_color_code(),
-            &self.content,
-        )
+    pub fn get_colored(&self) -> &str {
+        &self.colored
     }
 }
 
