@@ -8,10 +8,12 @@ use terminal_size::{terminal_size, Height, Width};
 
 mod bar;
 mod config;
+mod formatting;
 mod module;
 
 fn main() {
     let statusbar = config::make_bar();
+
     loop {
         let size = terminal_size();
 

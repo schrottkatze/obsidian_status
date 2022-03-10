@@ -1,51 +1,42 @@
 use std::process::Command;
 use std::time::SystemTime;
 
-use time::{format_description, formatting, OffsetDateTime};
+use time::{format_description, OffsetDateTime};
 
-use termcolor::{Color, ColorSpec};
-
-use super::bar::{Bar, BarConfig, SepSet};
-use super::module::{JustifyModule, Module};
+use super::bar::{Bar, SegSepTypes, Segment};
+use super::formatting::colored::Colored;
+use super::formatting::text_format_conf::{Color, TextFormatConf};
+use super::module::Module;
 
 pub const UPDATE_MS: u64 = 1000;
 
 pub fn make_bar() -> Bar {
-    //let color_spec = make_color_spec(127,0,255);
-    //let sep_color_spec = make_color_spec(0,127,255);
-    let mut color_spec = ColorSpec::new();
-    color_spec.set_fg(Some(Color::Rgb(127, 0, 255)));
+    let mut r = Bar::new((true, false));
 
-    let mut sep_color_spec = ColorSpec::new();
-    sep_color_spec.set_fg(Some(Color::Rgb(0, 127, 255)));
-
-    let mut bar = Bar::new(BarConfig {
-        sep_set: SepSet::SingleSidesDualCenter(
-            ">".to_string(),
-            ("(".to_string(), ")".to_string()),
-            "<".to_string(),
+    r.add_segment(Segment::DynSpacer).add_segment(Segment::StatusSeg(
+        vec![
+            Module::new(27, clock_mod, None),
+        ],
+        SegSepTypes::Two(
+            Colored::new("<", TextFormatConf::fg_only(Color::HCRed)),
+            Colored::new(">", TextFormatConf::fg_only(Color::HCGreen)),
         ),
-        color_spec,
-        sep_color_spec,
-        show_both_seps_on_overlap: false,
-        outer_sep_config: (true, true),
-    });
+    ))
+    .add_segment(Segment::DynSpacer)
+    .add_segment(Segment::StatusSeg(
+        vec![
+            Module::new(27, ping_cf_mod, None),
+        ],
+        SegSepTypes::Two(
+            Colored::new("<", TextFormatConf::fg_only(Color::HCRed)),
+            Colored::new(">", TextFormatConf::fg_only(Color::HCGreen)),
+        ),
+    ));
 
-    // clock example
-    bar.add_module(
-        JustifyModule::Center,
-        Module::new(20, clock_mod, None, None, None),
-    );
-
-    // ping example
-    bar.add_module(
-        JustifyModule::Left,
-        Module::new(27, ping_cf_mod, None, None, None),
-    );
-
-    bar
+    r
 }
 
+// len is 20
 fn clock_mod() -> String {
     let tfmt = format_description::parse("[year]-[month]-[day], [hour]:[minute]:[second]").unwrap();
     let systime: OffsetDateTime = SystemTime::now().into();
@@ -53,6 +44,8 @@ fn clock_mod() -> String {
     systime.format(&tfmt).unwrap()
 }
 
+// len is 26
+// TODO: Fix its hilarious instability
 fn ping_cf_mod() -> String {
     let ip = "1.1.1.1";
 
@@ -74,5 +67,10 @@ fn ping_cf_mod() -> String {
     let ms_pos = r.find("time=").unwrap() + 5;
     let time = &r[ms_pos..r.len()];
 
-    format!("Ping to {}:{}{}", ip, " ".repeat(4-(time.len() - 7)),time)
+    format!(
+        "{}:{}{}",
+        ip,
+        " ".repeat(8 - (time.len() - 3)),
+        time
+    )
 }
