@@ -3,7 +3,7 @@ use std::time::SystemTime;
 
 use time::{format_description, OffsetDateTime};
 
-use super::bar::{Bar, Segment, SegSepTypes};
+use super::bar::{Bar, SegSepTypes, Segment};
 use super::formatting::colored::Colored;
 use super::formatting::text_format_conf::{Color, TextFormatConf};
 use super::module::Module;
@@ -13,23 +13,23 @@ pub const UPDATE_MS: u64 = 1000;
 pub fn make_bar() -> Bar {
     let mut r = Bar::new((true, false));
 
-    r.add_segment(Segment::StatusSeg(
-        vec![Module::new(26, ping_cf_mod, None)],
+    r.add_segment(Segment::DynSpacer).add_segment(Segment::StatusSeg(
+        vec![
+            Module::new(27, clock_mod, None),
+        ],
         SegSepTypes::Two(
-            Colored::new("<", TextFormatConf::fg_only(Color::Rgb((127, 0, 255)))),
-            Colored::new(">", TextFormatConf::fg_only(Color::Rgb((0, 255, 0)))),
+            Colored::new("<", TextFormatConf::fg_only(Color::HCRed)),
+            Colored::new(">", TextFormatConf::fg_only(Color::HCGreen)),
         ),
     ))
     .add_segment(Segment::DynSpacer)
     .add_segment(Segment::StatusSeg(
         vec![
-            Module::new(20, clock_mod, None),
-            Module::new(20, clock_mod, None),
+            Module::new(27, ping_cf_mod, None),
         ],
-        SegSepTypes::Three(
-            Colored::new("(", TextFormatConf::fg_only(Color::Rgb((127, 0, 255)))),
-            Colored::new("|", TextFormatConf::fg_only(Color::Rgb((0, 127, 255)))),
-            Colored::new(")", TextFormatConf::fg_only(Color::Rgb((127, 0, 255)))),
+        SegSepTypes::Two(
+            Colored::new("<", TextFormatConf::fg_only(Color::HCRed)),
+            Colored::new(">", TextFormatConf::fg_only(Color::HCGreen)),
         ),
     ));
 
@@ -45,6 +45,7 @@ fn clock_mod() -> String {
 }
 
 // len is 26
+// TODO: Fix its hilarious instability
 fn ping_cf_mod() -> String {
     let ip = "1.1.1.1";
 
@@ -67,9 +68,9 @@ fn ping_cf_mod() -> String {
     let time = &r[ms_pos..r.len()];
 
     format!(
-        "Ping to {}:{}{}",
+        "{}:{}{}",
         ip,
-        " ".repeat(4 - (time.len() - 7)),
+        " ".repeat(8 - (time.len() - 3)),
         time
     )
 }

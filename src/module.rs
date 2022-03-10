@@ -25,7 +25,7 @@ impl Module {
         }
     }
 
-    pub fn start_render_thread(&self, seps: [&str; 2]) -> std::thread::JoinHandle<String> {
+    pub fn start_render_thread(&self, seps: [&str; 2]) -> std::thread::JoinHandle<(String, u16)> {
         let content_render = self.content_render.clone();
         let max_len = self.max_len.clone();
         let render_condition = self.render_condition.clone();
@@ -36,12 +36,12 @@ impl Module {
                 let mut r = (content_render)();
 
                 if r.len() > *max_len {
-                    r = r[0..*max_len].to_string();
+                    r = r[0..=*max_len].to_string();
                 }
 
-                format!("{}{}{}", seps[0], r, seps[1])
+                (format!("{}{}{}", seps[0], r, seps[1]), r.len() as u16)
             } else {
-                String::new()
+                (String::new(), 0)
             }
         })
     }

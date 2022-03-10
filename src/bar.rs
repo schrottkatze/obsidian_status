@@ -1,5 +1,5 @@
-use std::thread;
 use std::sync::Arc;
+use std::thread;
 
 use super::formatting::colored::Colored;
 use super::formatting::text_format_conf::TextFormatConf;
@@ -25,12 +25,15 @@ pub struct Bar {
 enum BuildingBlock {
     Dyn,
     Finished(String),
-    SegBuilders(Vec<thread::JoinHandle<String>>)
+    SegBuilders(Vec<thread::JoinHandle<(String, u16)>>),
 }
 
 impl Bar {
     pub fn new(seps_on_sides: (bool, bool)) -> Bar {
-        Bar { segments: vec![], seps_on_sides }
+        Bar {
+            segments: vec![],
+            seps_on_sides,
+        }
     }
 
     pub fn add_segment(&mut self, seg: Segment) -> &mut Bar {
@@ -48,8 +51,19 @@ impl Bar {
                 Segment::StaticSpacer(space) => {
                     bar_segs_prebuild.push(BuildingBlock::Finished(" ".repeat(*space as usize)));
                     len += space;
-                },
-                Segment::StatusSeg(mods, seps) => bar_segs_prebuild.push(BuildingBlock::SegBuilders(Bar::start_seg_threads(mods, seps, self.seps_on_sides, i == 0, i == self.segments.len() - 1)))
+                }
+                Segment::StatusSeg(mods, seps) => {
+                    let (builders, sep_lens) = Bar::start_seg_threads(
+                        mods,
+                        seps,
+                        self.seps_on_sides,
+                        i == 0,
+                        i == self.segments.len() - 1,
+                    );
+                    len += sep_lens;
+
+                    bar_segs_prebuild.push(BuildingBlock::SegBuilders(builders))
+                }
             }
         }
 
@@ -62,48 +76,72 @@ impl Bar {
                     for handle in handles {
                         let module = match handle.join() {
                             Ok(v) => v,
-                            Err(_) => String::from("ERR"),
+                            Err(_) => (String::from("ERR"), 0),
                         };
 
-                        len += module.len() as u16;
-                        assembled_status_segs.push(BuildingBlock::Finished(module));
+                        len += module.1;
+
+                        assembled_status_segs.push(BuildingBlock::Finished(module.0));
                     }
-                },
-                BuildingBlock::Finished(v) => assembled_status_segs.push(BuildingBlock::Finished(v)),
+                }
+                BuildingBlock::Finished(v) => {
+                    assembled_status_segs.push(BuildingBlock::Finished(v))
+                }
                 BuildingBlock::Dyn => {
                     assembled_status_segs.push(BuildingBlock::Dyn);
                     dyn_amount += 1;
-                },
+                }
             }
         }
 
         let mut final_bar: String = String::new();
-        let dyn_built = " ".repeat(((w - len) / dyn_amount) as usize);
+        let dyn_built = " ".repeat((((w - len) / dyn_amount)) as usize);
 
         for seg in assembled_status_segs {
             match seg {
                 BuildingBlock::Finished(v) => final_bar.push_str(&v),
                 BuildingBlock::Dyn => final_bar.push_str(&dyn_built),
-                _ => ()
+                _ => (),
             }
         }
 
         println!("{}", final_bar);
     }
 
-    fn start_seg_threads(mods: &Vec<Module>, seps: &SegSepTypes, sep_cfg: (bool, bool), first_of_bar: bool, last_of_bar: bool) -> Vec<thread::JoinHandle<String>> {
+    fn start_seg_threads(
+        mods: &Vec<Module>,
+        seps: &SegSepTypes,
+        sep_cfg: (bool, bool),
+        first_of_bar: bool,
+        last_of_bar: bool,
+    ) -> (Vec<thread::JoinHandle<(String, u16)>>, u16) {
         let mut r = vec![];
+        let mut sep_lens: u16 = 0;
+        let empty_colored = Colored::new("", TextFormatConf::new());
 
         for (i, module) in mods.iter().enumerate() {
-            let seps_mod: [&str; 2] = match seps {
-                SegSepTypes::One(sep) => if i == 0 { [sep.get_colored(), sep.get_colored()] } else { ["", sep.get_colored()]},
-                SegSepTypes::Two(before, after) => [before.get_colored(), after.get_colored()],
-                SegSepTypes::Three(before, mid, after) => [if i == 0 { before.get_colored() } else { "" }, if i == mods.len() - 1 { after.get_colored() } else { mid.get_colored() }],
+            let seps_mod: [&Colored; 2] = match seps {
+                SegSepTypes::One(sep) => {
+                    if i == 0 {
+                        [sep, sep]
+                    } else {
+                        [&empty_colored, sep]
+                    }
+                }
+                SegSepTypes::Two(before, after) => [before, after],
+                SegSepTypes::Three(before, mid, after) => [
+                    if i == 0 { before } else { &empty_colored },
+                    if i == mods.len() - 1 { after } else { mid },
+                ],
             };
 
-            r.push(module.start_render_thread(seps_mod));
+            sep_lens += (seps_mod[0].get_plain().len() + seps_mod[1].get_plain().len()) as u16;
+
+            r.push(
+                module.start_render_thread([seps_mod[0].get_colored(), seps_mod[1].get_colored()]),
+            );
         }
 
-        r
+        (r, sep_lens)
     }
 }
