@@ -1,8 +1,7 @@
-use std::sync::Arc;
-use std::thread;
+use std::{thread, io, io::Write};
 
 use super::formatting::colored::Colored;
-use super::formatting::text_format_conf::TextFormatConf;
+use super::formatting::text_format_conf::{TextFormatConf, Color};
 use super::module::Module;
 
 pub enum Segment {
@@ -76,7 +75,7 @@ impl Bar {
                     for handle in handles {
                         let module = match handle.join() {
                             Ok(v) => v,
-                            Err(_) => (String::from("ERR"), 0),
+                            Err(_) => (String::new(), 0),
                         };
 
                         len += module.1;
@@ -95,7 +94,7 @@ impl Bar {
         }
 
         let mut final_bar: String = String::new();
-        let dyn_built = " ".repeat((((w - len) / dyn_amount)) as usize);
+        let dyn_built = " ".repeat(((w - len) / dyn_amount) as usize);
 
         for seg in assembled_status_segs {
             match seg {
@@ -106,6 +105,7 @@ impl Bar {
         }
 
         println!("{}", final_bar);
+        io::stdout().flush().unwrap();
     }
 
     fn start_seg_threads(
@@ -117,7 +117,7 @@ impl Bar {
     ) -> (Vec<thread::JoinHandle<(String, u16)>>, u16) {
         let mut r = vec![];
         let mut sep_lens: u16 = 0;
-        let empty_colored = Colored::new("", TextFormatConf::new());
+        let empty_colored = Colored::new("", TextFormatConf::new(), false);
 
         for (i, module) in mods.iter().enumerate() {
             let seps_mod: [&Colored; 2] = match seps {
@@ -135,7 +135,7 @@ impl Bar {
                 ],
             };
 
-            sep_lens += (seps_mod[0].get_plain().len() + seps_mod[1].get_plain().len()) as u16;
+            sep_lens += (seps_mod[0].get_plain().chars().count() + seps_mod[1].get_plain().chars().count()) as u16;
 
             r.push(
                 module.start_render_thread([seps_mod[0].get_colored(), seps_mod[1].get_colored()]),

@@ -1,10 +1,10 @@
+extern crate time;
+extern crate terminal_size;
+extern crate battery;
+
+use terminal_size::{terminal_size, Height, Width};
 use std::thread;
 use std::time::Duration;
-
-extern crate time;
-
-extern crate terminal_size;
-use terminal_size::{terminal_size, Height, Width};
 
 mod bar;
 mod config;

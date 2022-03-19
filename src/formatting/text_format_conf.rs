@@ -1,3 +1,5 @@
+#[derive(Clone)]
+#[allow(dead_code)]
 pub enum Color {
     Black,
     Red,
@@ -19,6 +21,7 @@ pub enum Color {
     Rgb((u8, u8, u8)),
 }
 
+#[derive(Clone)]
 pub struct TextFormatConf {
     fg: Option<Color>,
     bg: Option<Color>,
@@ -33,6 +36,7 @@ pub struct TextFormatConf {
     reset_before: bool,
 }
 
+#[allow(dead_code)]
 impl TextFormatConf {
     pub fn new() -> TextFormatConf {
         TextFormatConf {
