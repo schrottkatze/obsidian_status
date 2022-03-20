@@ -1,24 +1,21 @@
-use std::{thread, io, io::Write};
+use std::{io, io::Write, thread};
 
 use super::formatting::colored::Colored;
-use super::formatting::text_format_conf::{TextFormatConf, Color};
+use super::formatting::text_format_conf::TextFormatConf;
 use super::module::Module;
 
+#[allow(dead_code)]
 pub enum Segment {
     DynSpacer,
     StaticSpacer(u16),
     StatusSeg(Vec<Module>, SegSepTypes),
 }
 
+#[allow(dead_code)]
 pub enum SegSepTypes {
     One(Colored),
     Two(Colored, Colored),
     Three(Colored, Colored, Colored),
-}
-
-pub struct Bar {
-    segments: Vec<Segment>,
-    seps_on_sides: (bool, bool),
 }
 
 enum BuildingBlock {
@@ -27,11 +24,14 @@ enum BuildingBlock {
     SegBuilders(Vec<thread::JoinHandle<(String, u16)>>),
 }
 
+pub struct Bar {
+    segments: Vec<Segment>,
+}
+
 impl Bar {
-    pub fn new(seps_on_sides: (bool, bool)) -> Bar {
+    pub fn new() -> Bar {
         Bar {
             segments: vec![],
-            seps_on_sides,
         }
     }
 
@@ -55,9 +55,6 @@ impl Bar {
                     let (builders, sep_lens) = Bar::start_seg_threads(
                         mods,
                         seps,
-                        self.seps_on_sides,
-                        i == 0,
-                        i == self.segments.len() - 1,
                     );
                     len += sep_lens;
 
@@ -109,11 +106,8 @@ impl Bar {
     }
 
     fn start_seg_threads(
-        mods: &Vec<Module>,
+        mods: &[Module],
         seps: &SegSepTypes,
-        sep_cfg: (bool, bool),
-        first_of_bar: bool,
-        last_of_bar: bool,
     ) -> (Vec<thread::JoinHandle<(String, u16)>>, u16) {
         let mut r = vec![];
         let mut sep_lens: u16 = 0;
@@ -135,7 +129,8 @@ impl Bar {
                 ],
             };
 
-            sep_lens += (seps_mod[0].get_plain().chars().count() + seps_mod[1].get_plain().chars().count()) as u16;
+            sep_lens += (seps_mod[0].get_plain().chars().count()
+                + seps_mod[1].get_plain().chars().count()) as u16;
 
             r.push(
                 module.start_render_thread([seps_mod[0].get_colored(), seps_mod[1].get_colored()]),

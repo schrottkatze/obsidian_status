@@ -1,6 +1,9 @@
 use super::text_format_conf::TextFormatConf;
 use std::fmt;
 
+// ideas:
+// - get_colored method instead
+// - store content and tfc seperately
 pub struct Colored {
     content: String,
     colored: String,

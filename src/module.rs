@@ -2,13 +2,13 @@ use std::sync::Arc;
 use std::thread;
 
 use super::formatting::colored::Colored;
-use super::formatting::text_format_conf::{TextFormatConf, Color};
+use super::formatting::text_format_conf::TextFormatConf;
 
 pub struct Module {
     max_len: Arc<usize>,
     content_render: Arc<fn() -> String>,
     render_condition: Arc<fn() -> bool>,
-    content_color: TextFormatConf
+    content_color: TextFormatConf,
 }
 
 impl Module {
@@ -27,8 +27,8 @@ impl Module {
             }),
             content_color: match content_color {
                 Some(v) => v,
-                None => TextFormatConf::new()
-            }
+                None => TextFormatConf::new(),
+            },
         }
     }
 
@@ -47,18 +47,18 @@ impl Module {
                     r = r[0..=*max_len].to_string();
                 }
 
-                (format!("{}{}{}", seps[0], Colored::new(&r, content_color, true).get_colored(), seps[1]), r.chars().count() as u16)
+                (
+                    format!(
+                        "{}{}{}",
+                        seps[0],
+                        Colored::new(&r, content_color, true).get_colored(),
+                        seps[1]
+                    ),
+                    r.chars().count() as u16,
+                )
             } else {
                 (String::new(), 0)
             }
         })
     }
-}
-
-#[allow(dead_code)]
-pub enum BarRenderPos {
-    FirstOfBar,
-    FirstOfSegment,
-    LastOfBar,
-    LastOfSegment,
 }

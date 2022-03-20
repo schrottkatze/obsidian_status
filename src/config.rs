@@ -1,4 +1,4 @@
-use std::time::{SystemTime};
+use std::time::SystemTime;
 
 use time::{format_description, OffsetDateTime};
 
@@ -16,10 +16,15 @@ pub fn make_bar() -> Bar {
 
     r.add_segment(Segment::DynSpacer)
         .add_segment(Segment::StatusSeg(
-            vec![Module::new(27, clock_mod, Some(TextFormatConf::fg_and_bg(
-                        Color::Rgb((0x28, 0x28, 0x28)),
-                        Color::Rgb((0xb1, 0x62, 0x86)),
-                        )), None)],
+            vec![Module::new(
+                27,
+                clock_mod,
+                Some(TextFormatConf::fg_and_bg(
+                    Color::Rgb((0x28, 0x28, 0x28)),
+                    Color::Rgb((0xb1, 0x62, 0x86)),
+                )),
+                None,
+            )],
             SegSepTypes::Two(
                 Colored::new(
                     "",
@@ -41,10 +46,15 @@ pub fn make_bar() -> Bar {
         ))
         .add_segment(Segment::DynSpacer)
         .add_segment(Segment::StatusSeg(
-            vec![Module::new(150, battery_mod, Some(TextFormatConf::fg_and_bg(
-                        Color::Rgb((0x28, 0x28, 0x28)),
-                        Color::Rgb((0xb1, 0x62, 0x86)),
-                    )), None)],
+            vec![Module::new(
+                150,
+                battery_mod,
+                Some(TextFormatConf::fg_and_bg(
+                    Color::Rgb((0x28, 0x28, 0x28)),
+                    Color::Rgb((0xb1, 0x62, 0x86)),
+                )),
+                None,
+            )],
             SegSepTypes::Three(
                 Colored::new(
                     "",
@@ -145,17 +155,28 @@ fn battery_mod() -> String {
                 _ => '',
             });
 
-            format!("{} {}%{}", icon, (bat_state * 100.0).floor(), match bat.1.state() {
-                State::Discharging => if let Some(t) = bat.1.time_to_empty() {
-                    let t_int = t.value as u64;
-                    format_to_h_m(t_int)
-                } else { "".to_string() },
-                State::Charging => if let Some(t) = bat.1.time_to_full() {
-                    let t_int = t.value as u64;
-                    format_to_h_m(t_int)
-                } else { "".to_string() },
-                _ => "".to_string()
-            })
+            format!(
+                "{} {}%{}",
+                icon,
+                (bat_state * 100.0).floor(),
+                match bat.1.state() {
+                    State::Discharging =>
+                        if let Some(t) = bat.1.time_to_empty() {
+                            let t_int = t.value as u64;
+                            format_to_h_m(t_int)
+                        } else {
+                            "".to_string()
+                        },
+                    State::Charging =>
+                        if let Some(t) = bat.1.time_to_full() {
+                            let t_int = t.value as u64;
+                            format_to_h_m(t_int)
+                        } else {
+                            "".to_string()
+                        },
+                    _ => "".to_string(),
+                }
+            )
         }
         None => String::from("No battery!"),
     }
@@ -165,5 +186,18 @@ fn format_to_h_m(t: u64) -> String {
     let h = t / 3600;
     let m = (t % 3600) / 60;
 
-    format!(" {}:{}", if h > 10 { h.to_string() } else { format!("0{}", h)}, if m > 10 { m.to_string() } else { format!("0{}", m) })
+    format!(
+        " {}:{}",
+        if h > 10 {
+            h.to_string()
+        } else {
+            format!("0{}", h)
+        },
+        if m > 10 {
+            m.to_string()
+        } else {
+            format!("0{}", m)
+        }
+    )
 }
+

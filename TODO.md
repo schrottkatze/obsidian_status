@@ -1,15 +1,13 @@
 # TODO
 
-- ends cfg
-- add reset option for end of Colored strings
-- default that for seps
-- add default colors for content blocks
+- make modules run independently of one another in seperate threads, maybe use mutexes for content?
+- add graph/progress bar thingy/gauge renderers
 
-## optionals
+## MultiColored struct:
 
-- graphs based on unicode braille
-- news ticker
-- ping checker
-- network data
-- memory (including swap) and cpu usage
-- disk usage
+wrapper for vec of Colored
+
+## Colored and MultiColored TODO:
+
+- implement string traits properly
+- clean up code in general with traits etc
