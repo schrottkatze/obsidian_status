@@ -1,18 +1,21 @@
+// Imports {{{
 use std::time::SystemTime;
 
 use time::{format_description, OffsetDateTime};
 
 use super::bar::{Bar, SegSepTypes, Segment};
 use super::formatting::colored::Colored;
+use super::formatting::multi_colored::MultiColored;
 use super::formatting::text_format_conf::{Color, TextFormatConf};
 use super::module::Module;
 
 use battery::{Battery, State};
+// }}}
 
 pub const UPDATE_MS: u64 = 1000;
 
 pub fn make_bar() -> Bar {
-    let mut r = Bar::new((true, false));
+    let mut r = Bar::new();
 
     r.add_segment(Segment::DynSpacer)
         .add_segment(Segment::StatusSeg(
@@ -87,14 +90,14 @@ pub fn make_bar() -> Bar {
 }
 
 // len is 20
-fn clock_mod() -> String {
+fn clock_mod() -> MultiColored {
     let tfmt = format_description::parse("[year]-[month]-[day], [hour]:[minute]:[second]").unwrap();
     let systime: OffsetDateTime = SystemTime::now().into();
 
-    systime.format(&tfmt).unwrap()
+    MultiColored::from_str(&systime.format(&tfmt).unwrap())
 }
 
-fn battery_mod() -> String {
+fn battery_mod() -> MultiColored {
     let manager = battery::Manager::new().unwrap();
     let mut bats: Vec<(usize, Battery)> = vec![];
 
@@ -155,7 +158,7 @@ fn battery_mod() -> String {
                 _ => '',
             });
 
-            format!(
+            MultiColored::from_str(&format!(
                 "{} {}%{}",
                 icon,
                 (bat_state * 100.0).floor(),
@@ -176,9 +179,9 @@ fn battery_mod() -> String {
                         },
                     _ => "".to_string(),
                 }
-            )
+            ))
         }
-        None => String::from("No battery!"),
+        None => MultiColored::from_str("No battery found!"),
     }
 }
 
@@ -200,4 +203,3 @@ fn format_to_h_m(t: u64) -> String {
         }
     )
 }
-

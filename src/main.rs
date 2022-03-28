@@ -1,3 +1,4 @@
+// Imports {{{
 extern crate battery;
 extern crate terminal_size;
 extern crate time;
@@ -10,6 +11,7 @@ mod bar;
 mod config;
 mod formatting;
 mod module;
+// }}}
 
 fn main() {
     let statusbar = config::make_bar();

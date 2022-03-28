@@ -1,3 +1,4 @@
+// Color enum {{{
 #[derive(Clone)]
 #[allow(dead_code)]
 pub enum Color {
@@ -20,7 +21,9 @@ pub enum Color {
     XTerm256(u8),
     Rgb((u8, u8, u8)),
 }
+// }}}
 
+// tfc {{{
 #[derive(Clone)]
 pub struct TextFormatConf {
     fg: Option<Color>,
@@ -38,6 +41,7 @@ pub struct TextFormatConf {
 
 #[allow(dead_code)]
 impl TextFormatConf {
+    // initializers {{{
     pub fn new() -> TextFormatConf {
         TextFormatConf {
             fg: None,
@@ -74,8 +78,10 @@ impl TextFormatConf {
 
         r
     }
+    // }}}
 
     pub fn get_ansi_color_code(&self) -> String {
+        //{{{
         let mut r = String::from("\x1b[");
 
         if self.reset_before {
@@ -205,8 +211,9 @@ impl TextFormatConf {
         }
 
         r
-    }
+    } //}}}
 
+    // Setters {{{
     pub fn set_fg(&mut self, col: Option<Color>) -> &mut TextFormatConf {
         self.fg = col;
         self
@@ -251,4 +258,6 @@ impl TextFormatConf {
         self.reset_before = reset;
         self
     }
+    // }}}
 }
+// }}}

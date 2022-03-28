@@ -1,20 +1,24 @@
+// Imports {{{
 use std::sync::Arc;
 use std::thread;
 
 use super::formatting::colored::Colored;
+use super::formatting::multi_colored::MultiColored;
 use super::formatting::text_format_conf::TextFormatConf;
+// }}}
 
 pub struct Module {
     max_len: Arc<usize>,
-    content_render: Arc<fn() -> String>,
+    content_render: Arc<fn() -> MultiColored>,
     render_condition: Arc<fn() -> bool>,
     content_color: TextFormatConf,
 }
 
 impl Module {
+    // Initializer {{{
     pub fn new(
         max_len: usize,
-        content_render: fn() -> String,
+        content_render: fn() -> MultiColored,
         content_color: Option<TextFormatConf>,
         render_condition: Option<fn() -> bool>,
     ) -> Module {
@@ -31,8 +35,12 @@ impl Module {
             },
         }
     }
+    // }}}
 
-    pub fn start_render_thread(&self, seps: [&str; 2]) -> std::thread::JoinHandle<(String, u16)> {
+    pub fn start_render_thread(
+        &self,
+        seps: [&Colored; 2],
+    ) -> std::thread::JoinHandle<MultiColored> {
         let content_render = self.content_render.clone();
         let max_len = self.max_len.clone();
         let render_condition = self.render_condition.clone();
@@ -40,22 +48,18 @@ impl Module {
         let content_color = self.content_color.clone();
 
         thread::spawn(move || {
-            if render_condition() {
-                let mut r = (content_render)();
+            let mut r = MultiColored::new();
 
-                if r.chars().count() > *max_len {
-                    r = r[0..=*max_len].to_string();
+            if render_condition() {
+                let mut content: MultiColored = (content_render)();
+
+                if content.len_visible_chars() > *max_len {
+                    content = content[0..*max_len + 1];
                 }
 
-                (
-                    format!(
-                        "{}{}{}",
-                        seps[0],
-                        Colored::new(&r, content_color, true).get_colored(),
-                        seps[1]
-                    ),
-                    r.chars().count() as u16,
-                )
+                r.push_colored(seps[0])
+                    .push_colored(content)
+                    .push_colored(seps[1])
             } else {
                 (String::new(), 0)
             }

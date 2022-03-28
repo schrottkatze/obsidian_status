@@ -1,8 +1,11 @@
+// Imports {{{
 use std::{io, io::Write, thread};
 
 use super::formatting::colored::Colored;
+use super::formatting::multi_colored::MultiColored;
 use super::formatting::text_format_conf::TextFormatConf;
 use super::module::Module;
+// }}}
 
 #[allow(dead_code)]
 pub enum Segment {
@@ -20,8 +23,8 @@ pub enum SegSepTypes {
 
 enum BuildingBlock {
     Dyn,
-    Finished(String),
-    SegBuilders(Vec<thread::JoinHandle<(String, u16)>>),
+    Finished(MultiColored),
+    SegBuilders(Vec<thread::JoinHandle<(MultiColored, u16)>>),
 }
 
 pub struct Bar {
@@ -30,9 +33,7 @@ pub struct Bar {
 
 impl Bar {
     pub fn new() -> Bar {
-        Bar {
-            segments: vec![],
-        }
+        Bar { segments: vec![] }
     }
 
     pub fn add_segment(&mut self, seg: Segment) -> &mut Bar {
@@ -48,15 +49,13 @@ impl Bar {
             match seg {
                 Segment::DynSpacer => bar_segs_prebuild.push(BuildingBlock::Dyn),
                 Segment::StaticSpacer(space) => {
-                    bar_segs_prebuild.push(BuildingBlock::Finished(" ".repeat(*space as usize)));
+                    bar_segs_prebuild.push(BuildingBlock::Finished(MultiColored::from_str(
+                        &" ".repeat(*space as usize),
+                    )));
                     len += space;
                 }
                 Segment::StatusSeg(mods, seps) => {
-                    let (builders, sep_lens) = Bar::start_seg_threads(
-                        mods,
-                        seps,
-                    );
-                    len += sep_lens;
+                    let builders = Bar::start_seg_threads(mods, seps);
 
                     bar_segs_prebuild.push(BuildingBlock::SegBuilders(builders))
                 }
@@ -105,12 +104,12 @@ impl Bar {
         io::stdout().flush().unwrap();
     }
 
+    // start_seg_threads fn {{{
     fn start_seg_threads(
         mods: &[Module],
         seps: &SegSepTypes,
-    ) -> (Vec<thread::JoinHandle<(String, u16)>>, u16) {
+    ) -> Vec<thread::JoinHandle<MultiColored>> {
         let mut r = vec![];
-        let mut sep_lens: u16 = 0;
         let empty_colored = Colored::new("", TextFormatConf::new(), false);
 
         for (i, module) in mods.iter().enumerate() {
@@ -129,14 +128,10 @@ impl Bar {
                 ],
             };
 
-            sep_lens += (seps_mod[0].get_plain().chars().count()
-                + seps_mod[1].get_plain().chars().count()) as u16;
-
-            r.push(
-                module.start_render_thread([seps_mod[0].get_colored(), seps_mod[1].get_colored()]),
-            );
+            r.push(module.start_render_thread(seps_mod));
         }
 
-        (r, sep_lens)
+        r
     }
+    // }}}
 }
