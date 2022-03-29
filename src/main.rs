@@ -1,28 +1,13 @@
-// Imports {{{
-extern crate battery;
-extern crate terminal_size;
-extern crate time;
+mod ansi_format;
+mod colored;
 
-use std::thread;
-use std::time::Duration;
-use terminal_size::{terminal_size, Height, Width};
-
-mod bar;
-mod config;
-mod formatting;
-mod module;
-// }}}
+use crate::ansi_format::{AnsiFormat, NoResetFormatConf};
+use ansi_format::Color;
 
 fn main() {
-    let statusbar = config::make_bar();
-
-    loop {
-        let size = terminal_size();
-
-        if let Some((Width(w), Height(_h))) = size {
-            statusbar.render(w);
-        }
-
-        thread::sleep(Duration::from_millis(config::UPDATE_MS));
-    }
+    println!(
+        "{}hii{}byee",
+        AnsiFormat::with_fg(Color::Blue).get_code(),
+        AnsiFormat::with_bg(Color::Red).get_code()
+    )
 }
