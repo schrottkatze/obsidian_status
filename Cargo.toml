@@ -7,6 +7,5 @@ edition = "2021"
 
 [dependencies]
 terminal_size = "0.1.17"
-termcolor = "1.1.2"
 time = {version = "0.3.7", features = ["formatting"]}
 battery = "0.7.5"

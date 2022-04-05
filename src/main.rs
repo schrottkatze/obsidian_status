@@ -1,13 +1,15 @@
-mod ansi_format;
-mod colored;
+mod bar;
+mod config;
+mod formatting;
 
-use crate::ansi_format::{AnsiFormat, NoResetFormatConf};
-use ansi_format::Color;
+use crate::bar::bar::Bar;
+use crate::bar::module::Module;
+use formatting::ansi_format::AnsiFormat;
+use formatting::color::Color;
+use formatting::colored::{Colored, ColoredString};
+use std::rc::Rc;
+use std::time::Duration;
 
 fn main() {
-    println!(
-        "{}hii{}byee",
-        AnsiFormat::with_fg(Color::Blue).get_code(),
-        AnsiFormat::with_bg(Color::Red).get_code()
-    )
+    let mut bar = config::make_bar();
 }

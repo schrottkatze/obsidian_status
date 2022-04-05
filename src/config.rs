@@ -1,103 +1,32 @@
 // Imports {{{
-use std::time::SystemTime;
+use std::time::{Duration, SystemTime};
 
 use time::{format_description, OffsetDateTime};
 
-use super::bar::{Bar, SegSepTypes, Segment};
-use super::formatting::colored::Colored;
-use super::formatting::multi_colored::MultiColored;
-use super::formatting::text_format_conf::{Color, TextFormatConf};
-use super::module::Module;
-
+use crate::{Bar, Color, Colored, Module};
 use battery::{Battery, State};
 // }}}
 
 pub const UPDATE_MS: u64 = 1000;
 
 pub fn make_bar() -> Bar {
-    let mut r = Bar::new();
+    let mut r = Bar::new(Duration::from_millis(UPDATE_MS));
 
-    r.add_segment(Segment::DynSpacer)
-        .add_segment(Segment::StatusSeg(
-            vec![Module::new(
-                27,
-                clock_mod,
-                Some(TextFormatConf::fg_and_bg(
-                    Color::Rgb((0x28, 0x28, 0x28)),
-                    Color::Rgb((0xb1, 0x62, 0x86)),
-                )),
-                None,
-            )],
-            SegSepTypes::Two(
-                Colored::new(
-                    "",
-                    TextFormatConf::fg_and_bg(
-                        Color::Rgb((0xb1, 0x62, 0x86)),
-                        Color::Rgb((0x28, 0x28, 0x28)),
-                    ),
-                    false,
-                ),
-                Colored::new(
-                    "",
-                    TextFormatConf::fg_and_bg(
-                        Color::Rgb((0xb1, 0x62, 0x86)),
-                        Color::Rgb((0x28, 0x28, 0x28)),
-                    ),
-                    true,
-                ),
-            ),
-        ))
-        .add_segment(Segment::DynSpacer)
-        .add_segment(Segment::StatusSeg(
-            vec![Module::new(
-                150,
-                battery_mod,
-                Some(TextFormatConf::fg_and_bg(
-                    Color::Rgb((0x28, 0x28, 0x28)),
-                    Color::Rgb((0xb1, 0x62, 0x86)),
-                )),
-                None,
-            )],
-            SegSepTypes::Three(
-                Colored::new(
-                    "",
-                    TextFormatConf::fg_and_bg(
-                        Color::Rgb((0xb1, 0x62, 0x86)),
-                        Color::Rgb((0x28, 0x28, 0x28)),
-                    ),
-                    false,
-                ),
-                Colored::new(
-                    "",
-                    TextFormatConf::fg_and_bg(
-                        Color::Rgb((0x28, 0x28, 0x28)),
-                        Color::Rgb((0xb1, 0x62, 0x86)),
-                    ),
-                    false,
-                ),
-                Colored::new(
-                    "",
-                    TextFormatConf::fg_and_bg(
-                        Color::Rgb((0xb1, 0x62, 0x86)),
-                        Color::Rgb((0x28, 0x28, 0x28)),
-                    ),
-                    true,
-                ),
-            ),
-        ));
+    r.push_module(Module::new_single_threaded(clock_mod));
+    r.push_module(Module::DynSpacer);
 
     r
 }
 
 // len is 20
-fn clock_mod() -> MultiColored {
+fn clock_mod() -> crate::Colored {
     let tfmt = format_description::parse("[year]-[month]-[day], [hour]:[minute]:[second]").unwrap();
     let systime: OffsetDateTime = SystemTime::now().into();
 
-    MultiColored::from_str(&systime.format(&tfmt).unwrap())
+    Colored::from_str(&systime.format(&tfmt).unwrap())
 }
 
-fn battery_mod() -> MultiColored {
+fn battery_mod() -> Colored {
     let manager = battery::Manager::new().unwrap();
     let mut bats: Vec<(usize, Battery)> = vec![];
 
@@ -158,7 +87,7 @@ fn battery_mod() -> MultiColored {
                 _ => '',
             });
 
-            MultiColored::from_str(&format!(
+            Colored::from_str(&format!(
                 "{} {}%{}",
                 icon,
                 (bat_state * 100.0).floor(),
@@ -181,7 +110,7 @@ fn battery_mod() -> MultiColored {
                 }
             ))
         }
-        None => MultiColored::from_str("No battery found!"),
+        None => Colored::from_str("No battery found!"),
     }
 }
 
