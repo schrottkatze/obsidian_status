@@ -3,7 +3,7 @@ use std::time::{Duration, SystemTime};
 
 use time::{format_description, OffsetDateTime};
 
-use crate::{Bar, Color, Colored, Module};
+use crate::{Bar, Colored, Module};
 use battery::{Battery, State};
 // }}}
 
@@ -12,21 +12,23 @@ pub const UPDATE_MS: u64 = 1000;
 pub fn make_bar() -> Bar {
     let mut r = Bar::new(Duration::from_millis(UPDATE_MS));
 
+    r.push_module(Module::DynSpacer);
     r.push_module(Module::new_single_threaded(clock_mod));
     r.push_module(Module::DynSpacer);
+    r.push_module(Module::new_multi_threaded(battery_mod, true));
 
     r
 }
 
-// len is 20
-fn clock_mod() -> crate::Colored {
-    let tfmt = format_description::parse("[year]-[month]-[day], [hour]:[minute]:[second]").unwrap();
+fn clock_mod() -> Colored {
+    let time_fmt =
+        format_description::parse("[year]-[month]-[day], [hour]:[minute]:[second]").unwrap();
     let systime: OffsetDateTime = SystemTime::now().into();
 
-    Colored::from_str(&systime.format(&tfmt).unwrap())
+    Colored::from_str(&systime.format(&time_fmt).unwrap())
 }
 
-fn battery_mod() -> Colored {
+fn battery_mod(_prev: Option<Vec<Colored>>) -> Colored {
     let manager = battery::Manager::new().unwrap();
     let mut bats: Vec<(usize, Battery)> = vec![];
 

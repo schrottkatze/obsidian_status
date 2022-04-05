@@ -36,7 +36,7 @@ impl Colored {
         let mut before = (0, 0);
         let mut after = (0, 0);
 
-        for (pos, item) in self.content.iter().enumerate() {
+        for (_pos, item) in self.content.iter().enumerate() {
             if item.len_visible_chars() >= range_rests.start {
                 before.1 = range_rests.start - 1;
             } else {

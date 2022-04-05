@@ -1,5 +1,6 @@
-use crate::{Bar, Colored};
-use std::sync::{mpsc, Arc, Mutex};
+use crate::Colored;
+use std::ops::{Deref, DerefMut};
+use std::sync::{mpsc, Arc, Mutex, MutexGuard};
 use std::thread;
 use std::thread::JoinHandle;
 
@@ -9,26 +10,27 @@ pub enum Module {
     SingleThreaded(SingleThreaded),
     MultiThreaded(MultiThreaded),
 }
-
 impl Module {
-    pub fn new_single_threaded(render_mod: fn() -> Colored) -> Module {
-        Module::SingleThreaded(SingleThreaded::new(render_mod))
+    pub fn new_single_threaded(run: fn() -> Colored) -> Module {
+        Module::SingleThreaded(SingleThreaded::new(run))
     }
-    pub fn new_multi_threaded(render_fn: fn(prev: Vec<Colored>) -> Colored) -> Module {
-        Module::MultiThreaded(MultiThreaded::new(render_fn))
+    pub fn new_multi_threaded(
+        run: fn(prev: Option<Vec<Colored>>) -> Colored,
+        collect_prev_data: bool,
+    ) -> Module {
+        Module::MultiThreaded(MultiThreaded::new(run, collect_prev_data))
     }
-    pub fn new_background(render: fn(rx: mpsc::Sender<Colored>)) -> Module {
-        Module::Background(Background::new(render))
+    pub fn new_background(run: fn(rx: mpsc::Sender<Colored>)) -> Module {
+        Module::Background(Background::new(run))
     }
 }
 
 pub struct SingleThreaded {
-    pub render_mod: fn() -> Colored,
+    pub run: fn() -> Colored,
 }
-
 impl SingleThreaded {
-    pub fn new(render_mod: fn() -> Colored) -> Self {
-        Self { render_mod }
+    pub fn new(run: fn() -> Colored) -> Self {
+        Self { run }
     }
 }
 
@@ -36,39 +38,44 @@ pub struct Background {
     background_thread: JoinHandle<()>,
     rx: mpsc::Receiver<Colored>,
 }
-
 impl Background {
-    pub fn new(background_renderer: fn(rx: mpsc::Sender<Colored>)) -> Self {
+    pub fn new(run: fn(rx: mpsc::Sender<Colored>)) -> Self {
         let (tx, rx) = mpsc::channel::<Colored>();
         Background {
-            background_thread: thread::spawn(move || background_renderer(tx)),
+            background_thread: thread::spawn(move || run(tx)),
             rx,
         }
     }
 }
 
 pub struct MultiThreaded {
-    render: Arc<fn(prev: Vec<Colored>) -> Colored>,
-    prev_data: Arc<Mutex<Vec<Colored>>>,
+    run: Arc<fn(prev: Option<Vec<Colored>>) -> Colored>,
+    prev_data: Arc<Mutex<Option<Vec<Colored>>>>,
 }
 
 impl MultiThreaded {
-    pub fn new(render: fn(prev: Vec<Colored>) -> Colored) -> Self {
+    pub fn new(run: fn(prev: Option<Vec<Colored>>) -> Colored, collect_prev_data: bool) -> Self {
         MultiThreaded {
-            render: Arc::new(render),
-            prev_data: Arc::new(Mutex::new(vec![])),
+            run: Arc::new(run),
+            prev_data: Arc::new(Mutex::new(if collect_prev_data {
+                Some(Vec::<Colored>::new())
+            } else {
+                None
+            })),
         }
     }
 
     pub fn start_render_thread(&self) -> JoinHandle<Colored> {
-        let render = self.render.clone();
+        let render = self.run.clone();
         let prev = self.prev_data.clone();
-        // thread::spawn(move || (*render.as_ref())((**prev).to_vec()))
         thread::spawn(move || {
-            let mut prevlist = prev.lock().unwrap();
-            let r = render(prevlist.clone());
+            let mut prv = prev.lock().unwrap();
+            let r = render(prv.clone());
 
-            prevlist.push(r.clone());
+            if let Some(prv) = prv.deref_mut() {
+                prv.push(r.clone())
+            }
+
             r
         })
     }
