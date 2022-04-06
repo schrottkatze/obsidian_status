@@ -1,4 +1,4 @@
-use std::thread::sleep;
+
 // Imports {{{
 use std::time::{Duration, SystemTime};
 
@@ -13,19 +13,6 @@ pub const UPDATE_MS: u64 = 1000;
 pub fn make_bar() -> Bar {
     let mut r = Bar::new(Duration::from_millis(UPDATE_MS));
 
-    r.push_module(Module::DynSpacer);
-    r.push_module(Module::new_background(|current, tx| {
-        sleep(Duration::from_millis(500));
-        let mut n = 10;
-        loop {
-            sleep(Duration::from_millis(2250));
-            n += 1;
-            let mut current = current.lock().unwrap();
-            *current = Some(Colored::from_str(&format!("{}", n)));
-            drop(current);
-            tx.send(()).unwrap();
-        }
-    }));
     r.push_module(Module::DynSpacer);
     r.push_module(Module::new_single_threaded(clock_mod));
     r.push_module(Module::DynSpacer);

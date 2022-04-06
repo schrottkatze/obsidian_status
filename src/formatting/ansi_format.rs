@@ -1,6 +1,6 @@
 use crate::formatting::color::Color;
 use crate::formatting::format_conf::FormatConf;
-use std::fmt::{Display, Formatter, Write};
+use std::fmt::{Display, Formatter};
 
 #[allow(dead_code)]
 #[derive(Clone)]
