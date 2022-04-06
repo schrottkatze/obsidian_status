@@ -1,6 +1,8 @@
 use crate::Colored;
+use std::cell::RefCell;
 use std::ops::{Deref, DerefMut};
-use std::sync::{mpsc, Arc, Mutex, MutexGuard};
+use std::sync::mpsc::Sender;
+use std::sync::{mpsc, Arc, LockResult, Mutex, MutexGuard};
 use std::thread;
 use std::thread::JoinHandle;
 
@@ -20,7 +22,7 @@ impl Module {
     ) -> Module {
         Module::MultiThreaded(MultiThreaded::new(run, collect_prev_data))
     }
-    pub fn new_background(run: fn(rx: mpsc::Sender<Colored>)) -> Module {
+    pub fn new_background(run: fn(Arc<Mutex<Option<Colored>>>, Sender<()>)) -> Module {
         Module::Background(Background::new(run))
     }
 }
@@ -35,15 +37,34 @@ impl SingleThreaded {
 }
 
 pub struct Background {
-    background_thread: JoinHandle<()>,
-    rx: mpsc::Receiver<Colored>,
+    background_thread_handle: RefCell<Option<JoinHandle<()>>>,
+    run: Arc<fn(Arc<Mutex<Option<Colored>>>, Sender<()>)>,
+    pub current: Arc<Mutex<Option<Colored>>>,
 }
 impl Background {
-    pub fn new(run: fn(rx: mpsc::Sender<Colored>)) -> Self {
-        let (tx, rx) = mpsc::channel::<Colored>();
+    pub fn new(run: fn(Arc<Mutex<Option<Colored>>>, Sender<()>)) -> Self {
         Background {
-            background_thread: thread::spawn(move || run(tx)),
-            rx,
+            run: Arc::new(run),
+            background_thread_handle: RefCell::new(None),
+            current: Arc::new(Mutex::new(None)),
+        }
+    }
+
+    pub fn start_thread(&self, tx: Sender<()>) {
+        let run = self.run.clone();
+        let current = self.current.clone();
+        *self.background_thread_handle.borrow_mut() = Some(thread::spawn(move || run(current, tx)));
+    }
+
+    pub fn is_running(&self) -> bool {
+        self.background_thread_handle.borrow().is_some()
+    }
+
+    pub fn get_current(&self) -> Colored {
+        let current = self.current.lock().unwrap();
+        match current.deref() {
+            Some(v) => v.clone(),
+            None => Colored::from_str(""),
         }
     }
 }
@@ -52,7 +73,6 @@ pub struct MultiThreaded {
     run: Arc<fn(prev: Option<Vec<Colored>>) -> Colored>,
     prev_data: Arc<Mutex<Option<Vec<Colored>>>>,
 }
-
 impl MultiThreaded {
     pub fn new(run: fn(prev: Option<Vec<Colored>>) -> Colored, collect_prev_data: bool) -> Self {
         MultiThreaded {
