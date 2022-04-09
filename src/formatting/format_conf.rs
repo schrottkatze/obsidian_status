@@ -31,6 +31,14 @@ impl FormatConf {
             strikethrough: None,
         }
     }
+    pub fn fg_and_bg(fg: Color, bg: Color) -> Self {
+        let mut r = Self::new();
+
+        r.set_fg(Some(fg));
+        r.set_bg(Some(bg));
+
+        r
+    }
     pub fn with_fg(fg: Color) -> Self {
         let mut r = Self::new();
 
@@ -151,7 +159,7 @@ impl Display for FormatConf {
         }
 
         if let Some(bg) = &self.bg {
-            write!(r, "{}", &bg.get_ansi_fg_part())?;
+            write!(r, "{}", &bg.get_ansi_bg_part())?;
         }
 
         if let Some(e) = r.chars().nth(r.len() - 1) {

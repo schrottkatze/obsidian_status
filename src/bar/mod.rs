@@ -51,8 +51,8 @@ impl Bar {
         if let Some((Width(w), Height(_h))) = term_size {
             self.start_module_threads(tx);
 
-            let temp_bar = BarBuilder::new(&self.modules);
-            let r = temp_bar.build_bar(w);
+            let builder = BarBuilder::new(&self.modules);
+            let r = builder.build_bar(w);
 
             println!("{}", r);
         }

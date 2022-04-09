@@ -1,4 +1,6 @@
 extern crate core;
+extern crate network_interface;
+extern crate sysinfo;
 
 mod bar;
 mod config;

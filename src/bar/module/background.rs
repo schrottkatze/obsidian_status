@@ -6,7 +6,7 @@ use std::sync::{Arc, Mutex};
 use std::thread;
 use std::thread::JoinHandle;
 
-type BackgroundRunFn = fn(Arc<Mutex<Option<Colored>>>, Sender<()>);
+pub type BackgroundRunFn = fn(Arc<Mutex<Option<Colored>>>, Sender<()>);
 
 pub struct Background {
     background_thread_handle: RefCell<Option<JoinHandle<()>>>,
@@ -32,7 +32,7 @@ impl Background {
     }
 
     pub fn is_not_running(&self) -> bool {
-        self.background_thread_handle.borrow().is_some()
+        self.background_thread_handle.borrow().is_none()
     }
 
     pub fn get_latest(&self) -> Colored {

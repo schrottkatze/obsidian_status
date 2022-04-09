@@ -13,8 +13,11 @@ impl Colored {
     pub fn new() -> Self {
         Colored { content: vec![] }
     }
-    pub fn push_el(&mut self, col_string: ColoredString) {
-        self.content.push(col_string);
+    pub fn push_el(&mut self, val: ColoredString) {
+        self.content.push(val);
+    }
+    pub fn push_colored(&mut self, val: &mut Colored) {
+        self.content.append(&mut val.content)
     }
     pub fn from_str(s: &str) -> Self {
         let mut r = Colored::new();

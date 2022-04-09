@@ -13,6 +13,9 @@ impl AnsiFormat {
     pub fn with_fg(fg: Color) -> Self {
         Self::Conf(FormatConf::with_fg(fg))
     }
+    pub fn fg_and_bg(fg: Color, bg: Color) -> Self {
+        Self::Conf(FormatConf::fg_and_bg(fg, bg))
+    }
     pub fn with_bg(bg: Color) -> Self {
         Self::Conf(FormatConf::with_bg(bg))
     }

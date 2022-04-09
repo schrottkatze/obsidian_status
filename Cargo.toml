@@ -9,3 +9,5 @@ edition = "2021"
 terminal_size = "0.1.17"
 time = {version = "0.3.7", features = ["formatting"]}
 battery = "0.7.5"
+network-interface = "0.1.3-beta"
+sysinfo = "0.3.19"
